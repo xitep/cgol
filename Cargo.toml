@@ -8,6 +8,7 @@ description = "Conway's game of life for the terminal"
 log = "*"
 env_logger = "*"
 getopts = "*"
+rustbox = "*"
 
 [dependencies.bit-vec]
 #version = "*"

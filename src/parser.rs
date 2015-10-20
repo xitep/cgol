@@ -30,13 +30,13 @@ pub fn load_from_file(min_width: usize, min_height: usize, filename: &str)
 // --------------------------------------------------------------------
 
 #[derive(Debug)]
-struct ParseError {
+struct Error {
     row: usize,
     col: usize,
     reason: String
 }
 
-impl fmt::Display for ParseError {
+impl fmt::Display for Error {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         write!(fmt, "{}:{}: {}", self.row, self.col, self.reason)
     }
@@ -45,7 +45,7 @@ impl fmt::Display for ParseError {
 // --------------------------------------------------------------------
 
 fn parse(min_width: usize, min_height: usize, world: &str)
-         -> Result<World, ParseError>
+         -> Result<World, Error>
 {
     let mut cells = BitVec::new();
     let (mut map_width, mut map_height) = (0usize, 0usize);
@@ -61,7 +61,7 @@ fn parse(min_width: usize, min_height: usize, world: &str)
         macro_rules! check_row_too_long {
             () => {{
                 if map_width > 0 && curr_map_width >= map_width {
-                    return Err(ParseError{
+                    return Err(Error{
                         row: row_no,
                         col: col_no,
                         reason: "Row too long".into(),
@@ -89,7 +89,7 @@ fn parse(min_width: usize, min_height: usize, world: &str)
                     cells.push(true);
                 }
                 // everything else: an invalid input
-                c => return Err(ParseError{
+                c => return Err(Error{
                     row: row_no,
                     col: col_no,
                     reason: format!("Invalid character: {}", c),
@@ -101,7 +101,7 @@ fn parse(min_width: usize, min_height: usize, world: &str)
         // the previous row
         if map_width > 0 {
             if curr_map_width != map_width {
-                return Err(ParseError{
+                return Err(Error{
                     row: row_no,
                     col: col_no,
                     reason: "Row too short".into(),
@@ -121,7 +121,7 @@ fn parse(min_width: usize, min_height: usize, world: &str)
         }
     }
     if map_width == 0 || map_height == 0 {
-        return Err(ParseError{
+        return Err(Error{
             row: row_no,
             col: col_no,
             reason: "Empty world!".into()

@@ -3,9 +3,11 @@ use std::fmt::{self, Write};
 use bit_vec::BitVec;
 
 pub struct World {
-    height: usize,
-    width:  usize,
-    cells:  BitVec, // cells addressable by: `x + y*width`
+    width:      usize,
+    height:     usize,
+
+    generation: usize,  // current generation of cells
+    cells:      BitVec, // cells addressable by: `x + y*width`
 }
 
 impl fmt::Debug for World {
@@ -19,22 +21,6 @@ impl fmt::Debug for World {
     }
 }
 
-impl fmt::Display for World {
-    fn fmt(&self, fmt: &mut fmt::Formatter)
-           -> Result<(), fmt::Error>
-    {
-        let mut pos = 0usize;
-        for cell in self.cells.iter() {
-            if pos > 0 && pos % self.width == 0 {
-                try!(fmt.write_char('\n'));
-            }
-            pos += 1;
-            try!(fmt.write_char(if cell { '#' } else { '.' }));
-        }
-        Ok(())
-    }
-}
-
 impl World {
     pub fn new(width: usize, height: usize, cells: BitVec)
            -> Result<World, &'static str>
@@ -45,8 +31,20 @@ impl World {
             Ok(World {
                 width: width,
                 height: height,
+                generation: 0,
                 cells: cells,
             })
+        }
+    }
+
+    pub fn width(&self) -> usize { self.width }
+    pub fn height(&self) -> usize { self.height }
+    pub fn generation(&self) -> usize { self.generation }
+
+    pub fn render_line<F: fmt::Write>(&self, line: usize, fmt: &mut F) {
+        assert!(line < self.height);
+        for i in 0..self.width {
+            let _ = fmt.write_char(if self.is_alive(i, line) { '#' } else { '.' });
         }
     }
 
@@ -77,6 +75,7 @@ impl World {
             trace!("setting {}x{} = {}", w, h, change);
             self.set_alive(w, h, change);
         }
+        self.generation += 1;
     }
 
     fn set_alive(&mut self, w: usize, h: usize, alive: bool) {
