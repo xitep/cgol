@@ -10,9 +10,39 @@ use std::process;
 mod world;
 mod parser;
 
+fn main() {
+    env_logger::init().unwrap();
+
+    macro_rules! err {
+        ($expr:expr) => {
+            match $expr {
+                Ok(v) => v,
+                Err(e) => {
+                    println!("{}", e);
+                    process::exit(1);
+                }
+            }
+        }
+    }
+
+    let cfg = err!(Config::from_cmdline());
+    let mut world = err!(parser::load_from_file(
+        cfg.map_min_width,
+        cfg.map_min_height,
+        &cfg.map_filename));
+    debug!("world: {}: {:?}", &cfg.map_filename, world);
+
+    for i in 0..cfg.generations {
+        println!("arg ({}):\n{}", i, world);
+        world.advance_generation();
+    }
+}
+
 struct Config {
-    generations:  usize,
-    map_filename: String,
+    generations:    usize,
+    map_min_width:  usize,
+    map_min_height: usize,
+    map_filename:   String,
 }
 
 impl Config {
@@ -29,6 +59,8 @@ impl Config {
         let mut opts = getopts::Options::new();
         opts.optflag("h", "help", "print this help screen");
         opts.optopt("i", "iter", "iterate N generations", "N");
+        opts.optopt("", "min-width", "make world at least N cells wide", "N");
+        opts.optopt("", "min-height", "make world at least N cells high", "N");
         let m = match opts.parse(&args) {
             Ok(m) => m,
             Err(e) => {
@@ -46,32 +78,15 @@ impl Config {
                               .map_or(Ok(3), |s|
                                       s.parse::<usize>()
                                       .map_err(|_| format!("Not a number: {}", s)))),
+            map_min_width: try!(m.opt_str("min-width")
+                                .map_or(Ok(0), |s|
+                                        s.parse::<usize>()
+                                        .map_err(|_| format!("Not a number: {}", s)))),
+            map_min_height: try!(m.opt_str("min-height")
+                                 .map_or(Ok(0), |s|
+                                         s.parse::<usize>()
+                                         .map_err(|_| format!("Not a number: {}", s)))),
             map_filename: m.free.into_iter().next().unwrap(),
         })
-    }
-}
-
-fn main() {
-    env_logger::init().unwrap();
-
-    macro_rules! err {
-        ($expr:expr) => {
-            match $expr {
-                Ok(v) => v,
-                Err(e) => {
-                    println!("{}", e);
-                    process::exit(1);
-                }
-            }
-        }
-    }
-
-    let cfg = err!(Config::from_cmdline());
-    let mut world = err!(parser::load_from_file(&cfg.map_filename));
-    debug!("world: {}: {:?}", &cfg.map_filename, world);
-
-    for i in 0..cfg.generations {
-        println!("arg ({}):\n{}", i, world);
-        world.advance_generation();
     }
 }

@@ -1,13 +1,17 @@
+use std::cmp;
 use std::fmt;
 use std::fs::{File};
 use std::io::{Read};
+use std::iter;
 
 use bit_vec::BitVec;
 use world::World;
 
 /// Loads a world from the given filename. Results either in the
 /// loaded world or a human readable error description.
-pub fn load_from_file(filename: &str) -> Result<World, String> {
+pub fn load_from_file(min_width: usize, min_height: usize, filename: &str)
+                      -> Result<World, String>
+{
     macro_rules! err {
         ($expr:expr) => {
             match $expr {
@@ -19,7 +23,7 @@ pub fn load_from_file(filename: &str) -> Result<World, String> {
     let mut f = err!(File::open(filename));
     let mut s = String::with_capacity(err!(f.metadata()).len() as usize);
     err!(f.read_to_string(&mut s));
-    let w = err!(parse(&s));
+    let w = err!(parse(min_width, min_height, &s));
     Ok(w)
 }
 
@@ -40,9 +44,11 @@ impl fmt::Display for ParseError {
 
 // --------------------------------------------------------------------
 
-fn parse(world: &str) -> Result<World, ParseError> {
+fn parse(min_width: usize, min_height: usize, world: &str)
+         -> Result<World, ParseError>
+{
     let mut cells = BitVec::new();
-    let (mut width, mut height) = (0usize, 0usize);
+    let (mut map_width, mut map_height) = (0usize, 0usize);
 
     let (mut row_no, mut col_no) = (0usize, 0usize);
     // ~ for each row of the world
@@ -50,18 +56,18 @@ fn parse(world: &str) -> Result<World, ParseError> {
         row_no += 1;
         col_no = 0usize;
 
-        let mut curr_width = 0usize;
+        let mut curr_map_width = 0usize;
 
         macro_rules! check_row_too_long {
             () => {{
-                if width > 0 && curr_width >= width {
+                if map_width > 0 && curr_map_width >= map_width {
                     return Err(ParseError{
                         row: row_no,
                         col: col_no,
                         reason: "Row too long".into(),
                     });
                 } else {
-                    curr_width += 1;
+                    curr_map_width += 1;
                 }
             }}
         }
@@ -93,8 +99,8 @@ fn parse(world: &str) -> Result<World, ParseError> {
         trace!("validating row ({}) with the previous one", row_no);
         // ~ check the with of the current row is the same as of
         // the previous row
-        if width > 0 {
-            if curr_width != width {
+        if map_width > 0 {
+            if curr_map_width != map_width {
                 return Err(ParseError{
                     row: row_no,
                     col: col_no,
@@ -102,22 +108,36 @@ fn parse(world: &str) -> Result<World, ParseError> {
                 });
             }
         } else {
-            width = curr_width;
+            map_width = curr_map_width;
         }
         // ~ track height of the world (ignoring leading empty lines)
-        if width > 0 {
-            height += 1;
+        if map_width > 0 {
+            if map_width < min_width {
+                for _ in map_width..min_width {
+                    cells.push(false);
+                }
+            }
+            map_height += 1;
         }
     }
-    if width == 0 || height == 0 {
+    if map_width == 0 || map_height == 0 {
         return Err(ParseError{
             row: row_no,
             col: col_no,
             reason: "Empty world!".into()
         });
     }
-    debug_assert!(width*height == cells.len());
+    if map_height < min_height {
+        let width = cmp::max(map_width, min_width);
+        for _ in map_height..min_height {
+            cells.extend(iter::repeat(false).take(width));
+        }
+    }
     cells.shrink_to_fit();
+
+    let width = cmp::max(map_width, min_width);
+    let height = cmp::max(map_height, min_height);
+    debug_assert!(width*height == cells.len());
     Ok(World::new(width, height, cells).unwrap())
 }
 
@@ -127,27 +147,27 @@ mod tests {
 
     #[test]
     fn test_parse_empty() {
-        assert!(parse("").is_err());
+        assert!(parse(0, 0, "").is_err());
     }
 
     #[test]
     fn test_parse_oneline() {
         // XXX shouldn't this actually constitute an invalid world?
-        let r = parse(".#.");
+        let r = parse(0, 0, ".#.");
         println!("{:?}", r);
         assert!(r.is_ok());
     }
 
     #[test]
     fn test_parse_twolines() {
-        let r = parse(".#.\n.#.");
+        let r = parse(0, 0, ".#.\n.#.");
         println!("{:?}", r);
         assert!(r.is_ok());
     }
 
     #[test]
     fn test_parse_blinker() {
-        let r = parse(r#"
+        let r = parse(0, 0, r#"
 . . .
 . # .
 . # .
