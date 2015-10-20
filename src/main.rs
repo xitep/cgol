@@ -4,6 +4,7 @@ extern crate env_logger;
 extern crate bit_vec;
 extern crate getopts;
 extern crate rustbox;
+extern crate time;
 
 use std::env;
 use std::process;
@@ -28,10 +29,7 @@ fn main() {
     }
 
     let cfg = err!(Config::from_cmdline());
-    let world = err!(parser::load_from_file(
-        cfg.map_min_width,
-        cfg.map_min_height,
-        &cfg.map_filename));
+    let world = err!(parser::load_from_file(&cfg.map_filename));
     debug!("world: {}: {:?}", &cfg.map_filename, world);
 
     if let Err(e) = ui::run(world) {
@@ -41,8 +39,6 @@ fn main() {
 }
 
 struct Config {
-    map_min_width:  usize,
-    map_min_height: usize,
     map_filename:   String,
 }
 
@@ -59,8 +55,6 @@ impl Config {
 
         let mut opts = getopts::Options::new();
         opts.optflag("h", "help", "print this help screen");
-        opts.optopt("", "min-width", "make world at least N cells wide", "N");
-        opts.optopt("", "min-height", "make world at least N cells high", "N");
         let m = match opts.parse(&args) {
             Ok(m) => m,
             Err(e) => {
@@ -74,14 +68,6 @@ impl Config {
             return Err(format!("Exactly one argument expected!"));
         }
         Ok(Config {
-            map_min_width: try!(m.opt_str("min-width")
-                                .map_or(Ok(0), |s|
-                                        s.parse::<usize>()
-                                        .map_err(|_| format!("Not a number: {}", s)))),
-            map_min_height: try!(m.opt_str("min-height")
-                                 .map_or(Ok(0), |s|
-                                         s.parse::<usize>()
-                                         .map_err(|_| format!("Not a number: {}", s)))),
             map_filename: m.free.into_iter().next().unwrap(),
         })
     }

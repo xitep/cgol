@@ -7,6 +7,7 @@ pub struct World {
     height:     usize,
 
     generation: usize,  // current generation of cells
+    alive:      usize,  // current number of live cells
     cells:      BitVec, // cells addressable by: `x + y*width`
 }
 
@@ -32,14 +33,34 @@ impl World {
                 width: width,
                 height: height,
                 generation: 0,
+                alive: cells.iter().filter(|&x| x).count(),
                 cells: cells,
             })
         }
     }
 
-    pub fn width(&self) -> usize { self.width }
+    pub fn alive(&self) -> usize { self.alive }
     pub fn height(&self) -> usize { self.height }
     pub fn generation(&self) -> usize { self.generation }
+
+    pub fn expand_to(&mut self, new_width: usize, new_height: usize) {
+        if new_width == self.width && new_height == self.height {
+            return;
+        }
+        let mut ncells = BitVec::from_elem(new_width * new_height, false);
+        for h in 0..self.height {
+            for w in 0..self.width {
+                if self.is_alive(w, h) {
+                    let (nw, nh) = (w % new_width, h % new_height);
+                    ncells.set(nh*new_width + nw, true);
+                }
+            }
+        }
+        self.width = new_width;
+        self.height = new_height;
+        self.cells = ncells;
+        self.alive = self.cells.iter().filter(|&x| x).count();
+    }
 
     pub fn render_line<F: fmt::Write>(&self, line: usize, fmt: &mut F) {
         assert!(line < self.height);
@@ -83,6 +104,11 @@ impl World {
         debug_assert!(h < self.height);
 
         self.cells.set(h*self.width + w, alive);
+        if alive {
+            self.alive += 1;
+        } else {
+            self.alive -= 1;
+        }
     }
 
     fn is_alive(&self, w: usize, h: usize) -> bool {
