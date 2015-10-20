@@ -7,6 +7,7 @@ description = "Conway's game of life for the terminal"
 [dependencies]
 log = "*"
 env_logger = "*"
+getopts = "*"
 
 [dependencies.bit-vec]
 #version = "*"

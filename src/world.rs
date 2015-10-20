@@ -62,7 +62,6 @@ impl World {
      4. Any dead cell with exactly three live neighbours becomes a live
         cell, as if by reproduction.
      */
-    // XXX unit tests
     pub fn advance_generation(&mut self) {
         let mut changes = Vec::new();
         for h in 0..self.height {
