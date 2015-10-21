@@ -94,11 +94,16 @@ impl UI {
         self.terminal.present();
     }
 
+    fn set_cursor(&self, w: usize, h: usize) {
+        self.terminal.set_cursor(w as isize, h as isize);
+    }
+
     fn redraw_scene(&mut self, world: &World, clear: bool) {
         if clear {
             self.clear();
         }
         self.print_world(world);
+        self.set_cursor(self.width - 1, self.height - 1);
         self.flush();
     }
 }
