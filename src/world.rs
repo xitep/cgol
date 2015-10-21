@@ -147,20 +147,9 @@ pub fn random(width: usize, height: usize) -> World {
 }
 
 fn wrapped(w: usize, offs: isize, wrap: usize) -> usize {
-    if offs >= 0 {
-        (w + offs as usize) % wrap
-    } else {
-        let offs = offs.abs() as usize;
-        if w >= offs {
-            w - offs
-        } else {
-            let mut u = (offs - w) % wrap;
-            if u > 0 {
-                u = wrap - u;
-            }
-            u
-        }
-    }
+    let (w, wrap) = (w as isize, wrap as isize);
+    let n = (w + offs) % wrap;
+    if n < 0 { (wrap + n) as usize } else { n as usize }
 }
 
 #[test]

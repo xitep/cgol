@@ -128,27 +128,27 @@ mod tests {
 
     #[test]
     fn test_parse_empty() {
-        assert!(parse(0, 0, "").is_err());
+        assert!(parse("").is_err());
     }
 
     #[test]
     fn test_parse_oneline() {
         // XXX shouldn't this actually constitute an invalid world?
-        let r = parse(0, 0, ".#.");
+        let r = parse(".#.");
         println!("{:?}", r);
         assert!(r.is_ok());
     }
 
     #[test]
     fn test_parse_twolines() {
-        let r = parse(0, 0, ".#.\n.#.");
+        let r = parse(".#.\n.#.");
         println!("{:?}", r);
         assert!(r.is_ok());
     }
 
     #[test]
     fn test_parse_blinker() {
-        let r = parse(0, 0, r#"
+        let r = parse(r#"
 . . .
 . # .
 . # .
