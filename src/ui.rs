@@ -3,11 +3,7 @@ use std::fmt::{self, Write};
 use rustbox::{self, RustBox, InitOptions, Event, Color};
 use rustbox::keyboard::{Key};
 use time::{Duration};
-use world::World;
-
-pub fn run(world: World) -> Result<(), String> {
-    run_(world).map_err(|e| format!("error: {}", e))
-}
+use world::{self, World};
 
 enum Error {
     RustboxInit(rustbox::InitError),
@@ -121,8 +117,17 @@ impl UI {
     }
 }
 
-fn run_(mut world: World) -> Result<(), Error> {
+pub fn run(world: Option<World>) -> Result<(), String> {
+    run_(world).map_err(|e| format!("error: {}", e))
+}
+
+fn run_(world: Option<World>) -> Result<(), Error> {
     let mut ui = try!(UI::init());
+    // ~ if no world was explicitely specified, generated one
+    let mut world = match world {
+        Some(w) => w,
+        None => world::random(ui.width(), ui.height()),
+    };
     // ~ expand the give world to the size of the ui and draw the world
     {
         world.expand_to(ui.width(), ui.height());
@@ -156,6 +161,13 @@ fn run_(mut world: World) -> Result<(), Error> {
                     Key::Char('q') => {
                         // ~ quit
                         break;
+                    }
+                    Key::Char('r') => {
+                        // ~ regenerate (random) world
+                        animate = false;
+                        nextdelay = Duration::nanoseconds(0);
+                        world = world::random(ui.width(), ui.height());
+                        ui.redraw_scene(&world, true);
                     }
                     Key::Char('+') => {
                         maxdelay = maxdelay * 2;

@@ -1,5 +1,6 @@
 use std::fmt::{self, Write};
 
+use rand::{thread_rng, Rng};
 use bit_vec::BitVec;
 
 pub struct World {
@@ -138,6 +139,11 @@ impl World {
         trace!("count_living_neighbours: {}x{} => {:?}", w, h, x);
         x
     }
+}
+
+pub fn random(width: usize, height: usize) -> World {
+    let mut r = thread_rng();
+    World::new(width, height, BitVec::from_fn(width * height, |_| r.gen::<f64>() < 0.3)).unwrap()
 }
 
 fn wrapped(w: usize, offs: isize, wrap: usize) -> usize {
