@@ -58,9 +58,14 @@ impl UI {
     fn width(&self) -> usize { self.width }
     fn height(&self) -> usize { self.height }
 
-    fn set_size(&mut self, width: usize, height: usize) {
-        self.width = width;
-        self.height = height;
+    fn expand_to_screen(&mut self, world: &mut World) {
+        let (w, h) = (self.terminal.width(), self.terminal.height());
+        if w == self.width && h == self.height {
+            return;
+        }
+        world.expand_to(w, h);
+        self.width = w;
+        self.height = h;
     }
 
     fn print_world(&mut self, world: &World) {
@@ -69,9 +74,8 @@ impl UI {
             world.render_line(h, &mut self.line_buf);
             self.print_line(0, h, &self.line_buf);
         }
-        self.print_status(
-            format_args!("Gen: {} / Alive: {}",
-                         world.generation(), world.alive()));
+        self.print_status(format_args!(
+            "Gen: {} / Alive: {}", world.generation(), world.alive()));
     }
 
     fn print_status(&mut self, args: fmt::Arguments) {
@@ -112,9 +116,7 @@ fn run_(mut world: World) -> Result<(), Error> {
     let mut ui = try!(UI::init());
     // ~ expand the give world to the size of the ui and draw the world
     {
-        let (ew, eh) = (ui.width(), ui.height());
-        debug!("resizing to {}x{}", ew, eh);
-        world.expand_to(ew, eh);
+        world.expand_to(ui.width(), ui.height());
         ui.redraw_scene(&world, false);
     }
 
@@ -154,6 +156,7 @@ fn run_(mut world: World) -> Result<(), Error> {
                     }
                     Key::Ctrl('l') => {
                         // ~ redraw screen
+                        ui.expand_to_screen(&mut world);
                         ui.redraw_scene(&world, true);
                     }
                     Key::Char(' ') => {
@@ -163,12 +166,6 @@ fn run_(mut world: World) -> Result<(), Error> {
                     }
                     _ => {},
                 }
-            }
-            Event::ResizeEvent(w, h) => {
-                let (w, h) = (w.abs() as usize, h.abs() as usize);
-                world.expand_to(ui.width(), ui.height());
-                ui.set_size(w, h);
-                ui.redraw_scene(&world, true);
             }
             _ => {},
         }
