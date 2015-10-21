@@ -74,6 +74,10 @@ impl UI {
             world.render_line(h, &mut self.line_buf);
             self.print_line(0, h, &self.line_buf);
         }
+        self.update_status(world);
+    }
+
+    fn update_status(&mut self, world: &World) {
         self.print_status(format_args!(
             "Gen: {} / Alive: {}", world.generation(), world.alive()));
     }
@@ -88,6 +92,11 @@ impl UI {
         self.terminal.print(
             x, y, rustbox::RB_NORMAL,
             Color::Default, Color::Default, line);
+    }
+
+    fn print_char(&self, x: usize, y: usize, c: char) {
+        self.terminal.print_char(x, y, rustbox::RB_NORMAL,
+                                 Color::Default, Color::Default, c);
     }
 
     fn clear(&self) {
@@ -134,8 +143,12 @@ fn run_(mut world: World) -> Result<(), Error> {
         match e {
             Event::NoEvent => {
                 // ~ advance generation
-                world.advance_generation();
-                ui.redraw_scene(&world, false);
+                world.advance_generation(|w, h, alive| {
+                    ui.print_char(w, h, if alive { '#' } else { '.' });
+                });
+                ui.update_status(&world);
+                ui.flush();
+
                 nextdelay = maxdelay;
             }
             Event::KeyEvent(Some(key)) => {

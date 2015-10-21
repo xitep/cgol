@@ -81,7 +81,7 @@ impl World {
      4. Any dead cell with exactly three live neighbours becomes a live
         cell, as if by reproduction.
      */
-    pub fn advance_generation(&mut self) {
+    pub fn advance_generation<F: FnMut(usize, usize, bool)>(&mut self, mut cb: F) {
         let mut changes = Vec::new();
         for h in 0..self.height {
             for w in 0..self.width {
@@ -92,11 +92,14 @@ impl World {
                 }
             }
         }
-        for (w, h, change) in changes {
+        for &(w, h, change) in changes.iter() {
             trace!("setting {}x{} = {}", w, h, change);
             self.set_alive(w, h, change);
         }
         self.generation += 1;
+        for &(w, h, change) in changes.iter() {
+            cb(w, h, change);
+        }
     }
 
     fn set_alive(&mut self, w: usize, h: usize, alive: bool) {
