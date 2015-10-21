@@ -160,7 +160,6 @@ fn run_(mut world: World) -> Result<(), Error> {
                         ui.redraw_scene(&world, true);
                     }
                     Key::Char(' ') => {
-                        // ~ advance generation
                         animate ^= true;
                         nextdelay = Duration::nanoseconds(0);
                     }
