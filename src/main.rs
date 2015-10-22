@@ -35,7 +35,7 @@ fn main() {
         Some(f) => Some(err!(parser::load_from_file(f))),
     };
 
-    if let Err(e) = ui::run(world) {
+    if let Err(e) = ui::run(world, cfg.alive_char, cfg.dead_char) {
         println!("{}", e);
         process::exit(1);
     }
@@ -43,6 +43,8 @@ fn main() {
 
 struct Config {
     map_filename: Option<String>,
+    alive_char: char,
+    dead_char: char,
 }
 
 impl Config {
@@ -59,6 +61,8 @@ impl Config {
         let mut opts = getopts::Options::new();
         opts.optflag("h", "help", "print this help screen");
         opts.optopt("f", "file", "load map from FILE", "FILE");
+        opts.optopt("", "alive-char", "character to represent alive cells with", "C");
+        opts.optopt("", "dead-char", "character to represent dead cells with", "C");
         let m = match opts.parse(&args) {
             Ok(m) => m,
             Err(e) => {
@@ -71,6 +75,10 @@ impl Config {
         if !m.free.is_empty() {
             return Err("No arguments expected!".to_owned());
         }
-        Ok(Config { map_filename: m.opt_str("file") })
+        Ok(Config {
+            map_filename: m.opt_str("file"),
+            alive_char: m.opt_str("alive-char").and_then(|s| s.chars().next()).unwrap_or('O'),
+            dead_char: m.opt_str("dead-char").and_then(|s| s.chars().next()).unwrap_or(' '),
+        })
     }
 }

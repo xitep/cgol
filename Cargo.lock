@@ -2,7 +2,7 @@
 name = "cgol"
 version = "0.1.0"
 dependencies = [
- "bit-vec 0.4.2",
+ "bit-vec 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "env_logger 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "getopts 0.2.14 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -31,6 +31,7 @@ dependencies = [
 [[package]]
 name = "bit-vec"
 version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "bitflags"

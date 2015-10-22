@@ -11,8 +11,11 @@ getopts = "*"
 rustbox = "*"
 time = "*"
 rand = "*"
+bit-vec = "*"
 
-[dependencies.bit-vec]
-#version = "*"
-#git = "https://github.com/contain-rs/bit-vec.git"
-path = "../bit-vec"
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false

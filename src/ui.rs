@@ -36,10 +36,13 @@ struct UI {
     height: usize,
 
     line_buf: String,
+
+    alive_char: char,
+    dead_char: char,
 }
 
 impl UI {
-    fn init() -> Result<UI, Error> {
+    fn init(alive: char, dead: char) -> Result<UI, Error> {
         let t = try!(RustBox::init(InitOptions { buffer_stderr: true, ..Default::default() }));
         let (width, height) = (t.width(), t.height());
         Ok(UI {
@@ -47,6 +50,8 @@ impl UI {
             width: width,
             height: height,
             line_buf: String::with_capacity(width),
+            alive_char: alive,
+            dead_char: dead,
         })
     }
 
@@ -67,10 +72,25 @@ impl UI {
         self.height = h;
     }
 
+    fn get_drawing_char(&self, alive: bool) -> char {
+        if alive {
+            self.alive_char
+        } else {
+            self.dead_char
+        }
+    }
+
+    fn render_line(&mut self, world: &World, h: usize) {
+        self.line_buf.clear();
+        for w in 0..world.width() {
+            let c = self.get_drawing_char(world.is_alive(w, h));
+            self.line_buf.push(c);
+        }
+    }
+
     fn print_world(&mut self, world: &World) {
         for h in 0..(world.height() - 1) {
-            self.line_buf.clear();
-            world.render_line(h, &mut self.line_buf);
+            self.render_line(world, h);
             self.print_line(0, h, &self.line_buf);
         }
         self.update_status(world);
@@ -78,9 +98,9 @@ impl UI {
 
     fn update_status(&mut self, world: &World) {
         let line_is_clean = if world.height() >= self.height() {
-            self.line_buf.clear();
-            world.render_line(self.height() - 1, &mut self.line_buf);
-            self.print_line(0, self.height() - 1, &self.line_buf);
+            let h = self.height() - 1;
+            self.render_line(world, h);
+            self.print_line(0, h, &self.line_buf);
             true
         } else {
             false
@@ -136,12 +156,12 @@ impl UI {
     }
 }
 
-pub fn run(world: Option<World>) -> Result<(), String> {
-    run_(world).map_err(|e| format!("error: {}", e))
+pub fn run(world: Option<World>, alive: char, dead: char) -> Result<(), String> {
+    run_(world, alive, dead).map_err(|e| format!("error: {}", e))
 }
 
-fn run_(world: Option<World>) -> Result<(), Error> {
-    let mut ui = try!(UI::init());
+fn run_(world: Option<World>, alive: char, dead: char) -> Result<(), Error> {
+    let mut ui = try!(UI::init(alive, dead));
     // ~ if no world was explicitely specified, generated one
     let mut world = match world {
         Some(w) => w,
@@ -168,13 +188,7 @@ fn run_(world: Option<World>) -> Result<(), Error> {
             Event::NoEvent => {
                 // ~ advance generation
                 world.advance_generation(|w, h, alive| {
-                    ui.print_char(w,
-                                  h,
-                                  if alive {
-                                      '#'
-                                  } else {
-                                      '.'
-                                  });
+                    ui.print_char(w, h, ui.get_drawing_char(alive));
                 });
                 ui.update_status(&world);
                 ui.flush();

@@ -42,9 +42,15 @@ impl World {
     pub fn alive(&self) -> usize {
         self.alive
     }
+
+    pub fn width(&self) -> usize {
+        self.width
+    }
+
     pub fn height(&self) -> usize {
         self.height
     }
+
     pub fn generation(&self) -> usize {
         self.generation
     }
@@ -66,17 +72,6 @@ impl World {
         self.height = new_height;
         self.cells = ncells;
         self.alive = self.cells.iter().filter(|&x| x).count();
-    }
-
-    pub fn render_line<F: fmt::Write>(&self, line: usize, fmt: &mut F) {
-        assert!(line < self.height);
-        for i in 0..self.width {
-            let _ = fmt.write_char(if self.is_alive(i, line) {
-                '#'
-            } else {
-                '.'
-            });
-        }
     }
 
     //
