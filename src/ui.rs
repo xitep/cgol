@@ -187,12 +187,7 @@ fn run_(world: Option<World>, alive: char, dead: char) -> Result<(), Error> {
         match e {
             Event::NoEvent => {
                 // ~ advance generation
-                world.advance_generation(|w, h, alive| {
-                    ui.print_char(w, h, ui.get_drawing_char(alive));
-                });
-                ui.update_status(&world);
-                ui.flush();
-
+                advance_one_step(&mut ui, &mut world);
                 nextdelay = maxdelay;
             }
             Event::KeyEvent(Some(key)) => {
@@ -207,6 +202,10 @@ fn run_(world: Option<World>, alive: char, dead: char) -> Result<(), Error> {
                         nextdelay = Duration::nanoseconds(0);
                         world = world::random(ui.width(), ui.height());
                         ui.redraw_scene(&world, true);
+                    }
+                    Key::Char('s') => {
+                        // ~ advance generation
+                        advance_one_step(&mut ui, &mut world);
                     }
                     Key::Char('-') => {
                         maxdelay = maxdelay * 2;
@@ -234,4 +233,12 @@ fn run_(world: Option<World>, alive: char, dead: char) -> Result<(), Error> {
         }
     }
     Ok(())
+}
+
+fn advance_one_step(ui: &mut UI, world: &mut World) {
+    world.advance_generation(|w, h, alive| {
+        ui.print_char(w, h, ui.get_drawing_char(alive));
+    });
+    ui.update_status(&world);
+    ui.flush();
 }

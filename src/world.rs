@@ -98,7 +98,6 @@ impl World {
             }
         }
         for &(w, h, change) in changes.iter() {
-            trace!("setting {}x{} = {}", w, h, change);
             self.set_alive(w, h, change);
         }
         self.generation += 1;
@@ -133,14 +132,11 @@ impl World {
         let mut living_neighbours = 0usize;
         for &(x, y) in &[(-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1)] {
             let (w1, h1) = (wrapped(w, x, self.width), wrapped(h, y, self.height));
-            let alive = self.is_alive(w1, h1);
-            trace!("{}x{}: {}x{} => {}", w, h, w1, h1, alive);
-            if alive {
+            if self.is_alive(w1, h1) {
                 living_neighbours += 1;
             }
         }
         let x = (self.is_alive(w, h), living_neighbours);
-        trace!("count_living_neighbours: {}x{} => {:?}", w, h, x);
         x
     }
 }
