@@ -1,6 +1,6 @@
 use std::fmt::{self, Write};
 
-use rand::{thread_rng, Rng};
+use rand::Rng;
 use bit_vec::BitVec;
 
 pub struct World {
@@ -26,6 +26,12 @@ impl fmt::Debug for World {
 impl World {
     pub fn empty(width: usize, height: usize) -> World {
         World::from_cells(width, height, BitVec::from_elem(width * height, false))
+    }
+
+    pub fn random<R: Rng>(r: &mut R, width: usize, height: usize) -> World {
+        World::from_cells(width,
+                          height,
+                          BitVec::from_fn(width * height, |_| r.gen::<f64>() < 0.3))
     }
 
     fn from_cells(width: usize, height: usize, cells: BitVec) -> World {
@@ -141,13 +147,6 @@ impl World {
     }
 }
 
-pub fn random(width: usize, height: usize) -> World {
-    let mut r = thread_rng();
-    World::from_cells(width,
-                      height,
-                      BitVec::from_fn(width * height, |_| r.gen::<f64>() < 0.3))
-}
-
 fn wrapped(w: usize, offs: isize, wrap: usize) -> usize {
     let (w, wrap) = (w as isize, wrap as isize);
     let n = (w + offs) % wrap;
@@ -168,4 +167,23 @@ fn test_wrapped() {
     assert_eq!(wrapped(0, -10, 5), 0);
     assert_eq!(wrapped(1, -11, 5), 0);
     assert_eq!(wrapped(2, -11, 5), 1);
+}
+
+#[cfg(test)]
+mod benches {
+    use super::World;
+
+    use rand::XorShiftRng;
+    use test::{black_box, Bencher};
+
+    const WIDTH: usize = 300;
+    const HEIGHT: usize = 300;
+
+    #[bench]
+    fn advance_generation_random_world(b: &mut Bencher) {
+        let mut w = World::random(&mut XorShiftRng::new_unseeded(), WIDTH, HEIGHT);
+        b.iter(|| w.advance_generation(|_, _, state| {
+            black_box(state);
+        }));
+    }
 }

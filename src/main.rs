@@ -1,3 +1,5 @@
+#![feature(test)]
+
 #[macro_use]
 extern crate log;
 extern crate env_logger;
@@ -6,6 +8,8 @@ extern crate getopts;
 extern crate rustbox;
 extern crate time;
 extern crate rand;
+
+extern crate test;
 
 use std::env;
 use std::process;
