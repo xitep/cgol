@@ -71,8 +71,6 @@ impl Config {
         if !m.free.is_empty() {
             return Err("No arguments expected!".to_owned());
         }
-        Ok(Config {
-            map_filename: m.opt_str("file"),
-        })
+        Ok(Config { map_filename: m.opt_str("file") })
     }
 }

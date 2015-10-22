@@ -1,6 +1,6 @@
 use std::fmt;
-use std::fs::{File};
-use std::io::{Read};
+use std::fs::File;
+use std::io::Read;
 
 use bit_vec::BitVec;
 use world::World;
@@ -29,7 +29,7 @@ pub fn load_from_file(filename: &str) -> Result<World, String> {
 struct Error {
     row: usize,
     col: usize,
-    reason: String
+    reason: String,
 }
 
 impl fmt::Display for Error {
@@ -72,7 +72,7 @@ fn parse(world: &str) -> Result<World, Error> {
             col_no += 1;
             match c {
                 ' ' => {
-                    /* ignore (only) blanks */
+                    // ignore (only) blanks
                 }
                 '.' => {
                     check_row_too_long!();
@@ -83,7 +83,7 @@ fn parse(world: &str) -> Result<World, Error> {
                     cells.push(true);
                 }
                 // everything else: an invalid input
-                c => return Err(Error{
+                c => return Err(Error {
                     row: row_no,
                     col: col_no,
                     reason: format!("Invalid character: {}", c),
@@ -95,7 +95,7 @@ fn parse(world: &str) -> Result<World, Error> {
         // the previous row
         if width > 0 {
             if curr_width != width {
-                return Err(Error{
+                return Err(Error {
                     row: row_no,
                     col: col_no,
                     reason: "Row too short".into(),
@@ -110,15 +110,15 @@ fn parse(world: &str) -> Result<World, Error> {
         }
     }
     if width == 0 || height == 0 {
-        return Err(Error{
+        return Err(Error {
             row: row_no,
             col: col_no,
-            reason: "Empty world!".into()
+            reason: "Empty world!".into(),
         });
     }
     cells.shrink_to_fit();
 
-    debug_assert!(width*height == cells.len());
+    debug_assert!(width * height == cells.len());
     Ok(World::new(width, height, cells).unwrap())
 }
 

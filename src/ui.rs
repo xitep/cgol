@@ -1,8 +1,8 @@
 use std::fmt::{self, Write};
 
 use rustbox::{self, RustBox, InitOptions, Event, Color};
-use rustbox::keyboard::{Key};
-use time::{Duration};
+use rustbox::keyboard::Key;
+use time::Duration;
 use world::{self, World};
 
 enum Error {
@@ -11,37 +11,36 @@ enum Error {
 }
 
 impl From<rustbox::InitError> for Error {
-    fn from(e: rustbox::InitError) -> Self { Error::RustboxInit(e) }
+    fn from(e: rustbox::InitError) -> Self {
+        Error::RustboxInit(e)
+    }
 }
 impl From<rustbox::EventError> for Error {
-    fn from(e: rustbox::EventError) -> Self { Error::RustboxEvent(e) }
+    fn from(e: rustbox::EventError) -> Self {
+        Error::RustboxEvent(e)
+    }
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Error::RustboxEvent(ref e) =>
-                write!(fmt, "rustbox::event: {}", e),
-            Error::RustboxInit(ref e) =>
-                write!(fmt, "rustbox::init: {}", e),
+            Error::RustboxEvent(ref e) => write!(fmt, "rustbox::event: {}", e),
+            Error::RustboxInit(ref e) => write!(fmt, "rustbox::init: {}", e),
         }
     }
 }
 
 struct UI {
     terminal: RustBox,
-    width:    usize,
-    height:   usize,
+    width: usize,
+    height: usize,
 
     line_buf: String,
 }
 
 impl UI {
     fn init() -> Result<UI, Error> {
-        let t = try!(RustBox::init(InitOptions {
-            buffer_stderr: true,
-            .. Default::default()
-        }));
+        let t = try!(RustBox::init(InitOptions { buffer_stderr: true, ..Default::default() }));
         let (width, height) = (t.width(), t.height());
         Ok(UI {
             terminal: t,
@@ -51,8 +50,12 @@ impl UI {
         })
     }
 
-    fn width(&self) -> usize { self.width }
-    fn height(&self) -> usize { self.height }
+    fn width(&self) -> usize {
+        self.width
+    }
+    fn height(&self) -> usize {
+        self.height
+    }
 
     fn expand_to_screen(&mut self, world: &mut World) {
         let (w, h) = (self.terminal.width(), self.terminal.height());
@@ -74,8 +77,7 @@ impl UI {
     }
 
     fn update_status(&mut self, world: &World) {
-        self.print_status(format_args!(
-            "Gen: {} / Alive: {}", world.generation(), world.alive()));
+        self.print_status(format_args!("Gen: {} / Alive: {}", world.generation(), world.alive()));
     }
 
     fn print_status(&mut self, args: fmt::Arguments) {
@@ -85,14 +87,16 @@ impl UI {
     }
 
     fn print_line(&self, x: usize, y: usize, line: &str) {
-        self.terminal.print(
-            x, y, rustbox::RB_NORMAL,
-            Color::Default, Color::Default, line);
+        self.terminal.print(x,
+                            y,
+                            rustbox::RB_NORMAL,
+                            Color::Default,
+                            Color::Default,
+                            line);
     }
 
     fn print_char(&self, x: usize, y: usize, c: char) {
-        self.terminal.print_char(x, y, rustbox::RB_NORMAL,
-                                 Color::Default, Color::Default, c);
+        self.terminal.print_char(x, y, rustbox::RB_NORMAL, Color::Default, Color::Default, c);
     }
 
     fn clear(&self) {
@@ -149,7 +153,13 @@ fn run_(world: Option<World>) -> Result<(), Error> {
             Event::NoEvent => {
                 // ~ advance generation
                 world.advance_generation(|w, h, alive| {
-                    ui.print_char(w, h, if alive { '#' } else { '.' });
+                    ui.print_char(w,
+                                  h,
+                                  if alive {
+                                      '#'
+                                  } else {
+                                      '.'
+                                  });
                 });
                 ui.update_status(&world);
                 ui.flush();
@@ -169,11 +179,11 @@ fn run_(world: Option<World>) -> Result<(), Error> {
                         world = world::random(ui.width(), ui.height());
                         ui.redraw_scene(&world, true);
                     }
-                    Key::Char('+') => {
+                    Key::Char('-') => {
                         maxdelay = maxdelay * 2;
                         nextdelay = maxdelay;
                     }
-                    Key::Char('-') => {
+                    Key::Char('+') => {
                         if maxdelay.num_milliseconds() > 0 {
                             maxdelay = maxdelay / 2;
                             nextdelay = maxdelay;
@@ -188,10 +198,10 @@ fn run_(world: Option<World>) -> Result<(), Error> {
                         animate ^= true;
                         nextdelay = Duration::nanoseconds(0);
                     }
-                    _ => {},
+                    _ => {}
                 }
             }
-            _ => {},
+            _ => {}
         }
     }
     Ok(())

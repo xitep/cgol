@@ -4,30 +4,28 @@ use rand::{thread_rng, Rng};
 use bit_vec::BitVec;
 
 pub struct World {
-    width:      usize,
-    height:     usize,
+    width: usize,
+    height: usize,
 
-    generation: usize,  // current generation of cells
-    alive:      usize,  // current number of live cells
-    cells:      BitVec, // cells addressable by: `x + y*width`
+    generation: usize, // current generation of cells
+    alive: usize, // current number of live cells
+    cells: BitVec, // cells addressable by: `x + y*width`
 }
 
 impl fmt::Debug for World {
-    fn fmt(&self, fmt: &mut fmt::Formatter)
-           -> Result<(), fmt::Error>
-    {
-        write!(fmt, "{}x{} (alive: {}, capacity: {})",
-               self.width, self.height,
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        write!(fmt,
+               "{}x{} (alive: {}, capacity: {})",
+               self.width,
+               self.height,
                self.cells.iter().filter(|&x| x).count(),
                self.cells.capacity())
     }
 }
 
 impl World {
-    pub fn new(width: usize, height: usize, cells: BitVec)
-           -> Result<World, &'static str>
-    {
-        if width*height != cells.len() {
+    pub fn new(width: usize, height: usize, cells: BitVec) -> Result<World, &'static str> {
+        if width * height != cells.len() {
             Err("width*height != cells")
         } else {
             Ok(World {
@@ -40,9 +38,15 @@ impl World {
         }
     }
 
-    pub fn alive(&self) -> usize { self.alive }
-    pub fn height(&self) -> usize { self.height }
-    pub fn generation(&self) -> usize { self.generation }
+    pub fn alive(&self) -> usize {
+        self.alive
+    }
+    pub fn height(&self) -> usize {
+        self.height
+    }
+    pub fn generation(&self) -> usize {
+        self.generation
+    }
 
     pub fn expand_to(&mut self, new_width: usize, new_height: usize) {
         if new_width == self.width && new_height == self.height {
@@ -53,7 +57,7 @@ impl World {
             for w in 0..self.width {
                 if self.is_alive(w, h) {
                     let (nw, nh) = (w % new_width, h % new_height);
-                    ncells.set(nh*new_width + nw, true);
+                    ncells.set(nh * new_width + nw, true);
                 }
             }
         }
@@ -66,22 +70,26 @@ impl World {
     pub fn render_line<F: fmt::Write>(&self, line: usize, fmt: &mut F) {
         assert!(line < self.height);
         for i in 0..self.width {
-            let _ = fmt.write_char(if self.is_alive(i, line) { '#' } else { '.' });
+            let _ = fmt.write_char(if self.is_alive(i, line) {
+                '#'
+            } else {
+                '.'
+            });
         }
     }
 
-    /*
-     Rules (https://en.wikipedia.org/wiki/Conway's_Game_of_Life):
-
-     1. Any live cell with fewer than two live neighbours dies, as if
-        caused by under-population.
-     2. Any live cell with two or three live neighbours lives on to the
-        next generation.
-     3. Any live cell with more than three live neighbours dies, as if
-        by over-population.
-     4. Any dead cell with exactly three live neighbours becomes a live
-        cell, as if by reproduction.
-     */
+    //
+    // Rules (https://en.wikipedia.org/wiki/Conway's_Game_of_Life):
+    //
+    // 1. Any live cell with fewer than two live neighbours dies, as if
+    // caused by under-population.
+    // 2. Any live cell with two or three live neighbours lives on to the
+    // next generation.
+    // 3. Any live cell with more than three live neighbours dies, as if
+    // by over-population.
+    // 4. Any dead cell with exactly three live neighbours becomes a live
+    // cell, as if by reproduction.
+    //
     pub fn advance_generation<F: FnMut(usize, usize, bool)>(&mut self, mut cb: F) {
         let mut changes = Vec::new();
         for h in 0..self.height {
@@ -107,7 +115,7 @@ impl World {
         debug_assert!(w < self.width);
         debug_assert!(h < self.height);
 
-        self.cells.set(h*self.width + w, alive);
+        self.cells.set(h * self.width + w, alive);
         if alive {
             self.alive += 1;
         } else {
@@ -119,7 +127,7 @@ impl World {
         debug_assert!(w < self.width);
         debug_assert!(h < self.height);
 
-        self.cells[h*self.width + w]
+        self.cells[h * self.width + w]
     }
 
     fn count_living_neighbours(&mut self, w: usize, h: usize) -> (bool, usize) {
@@ -143,13 +151,20 @@ impl World {
 
 pub fn random(width: usize, height: usize) -> World {
     let mut r = thread_rng();
-    World::new(width, height, BitVec::from_fn(width * height, |_| r.gen::<f64>() < 0.3)).unwrap()
+    World::new(width,
+               height,
+               BitVec::from_fn(width * height, |_| r.gen::<f64>() < 0.3))
+        .unwrap()
 }
 
 fn wrapped(w: usize, offs: isize, wrap: usize) -> usize {
     let (w, wrap) = (w as isize, wrap as isize);
     let n = (w + offs) % wrap;
-    if n < 0 { (wrap + n) as usize } else { n as usize }
+    if n < 0 {
+        (wrap + n) as usize
+    } else {
+        n as usize
+    }
 }
 
 #[test]
