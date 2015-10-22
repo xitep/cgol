@@ -24,17 +24,18 @@ impl fmt::Debug for World {
 }
 
 impl World {
-    pub fn new(width: usize, height: usize, cells: BitVec) -> Result<World, &'static str> {
-        if width * height != cells.len() {
-            Err("width*height != cells")
-        } else {
-            Ok(World {
-                width: width,
-                height: height,
-                generation: 0,
-                alive: cells.iter().filter(|&x| x).count(),
-                cells: cells,
-            })
+    pub fn empty(width: usize, height: usize) -> World {
+        World::from_cells(width, height, BitVec::from_elem(width * height, false))
+    }
+
+    fn from_cells(width: usize, height: usize, cells: BitVec) -> World {
+        assert_eq!(width * height, cells.len());
+        World {
+            width: width,
+            height: height,
+            generation: 0,
+            alive: cells.iter().filter(|&x| x).count(),
+            cells: cells,
         }
     }
 
@@ -111,7 +112,7 @@ impl World {
         }
     }
 
-    fn set_alive(&mut self, w: usize, h: usize, alive: bool) {
+    pub fn set_alive(&mut self, w: usize, h: usize, alive: bool) {
         debug_assert!(w < self.width);
         debug_assert!(h < self.height);
 
@@ -123,7 +124,7 @@ impl World {
         }
     }
 
-    fn is_alive(&self, w: usize, h: usize) -> bool {
+    pub fn is_alive(&self, w: usize, h: usize) -> bool {
         debug_assert!(w < self.width);
         debug_assert!(h < self.height);
 
@@ -151,10 +152,9 @@ impl World {
 
 pub fn random(width: usize, height: usize) -> World {
     let mut r = thread_rng();
-    World::new(width,
-               height,
-               BitVec::from_fn(width * height, |_| r.gen::<f64>() < 0.3))
-        .unwrap()
+    World::from_cells(width,
+                      height,
+                      BitVec::from_fn(width * height, |_| r.gen::<f64>() < 0.3))
 }
 
 fn wrapped(w: usize, offs: isize, wrap: usize) -> usize {

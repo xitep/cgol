@@ -86,9 +86,7 @@ impl UI {
             false
         };
         self.print_status(line_is_clean,
-                          format_args!("Gen: {} / Alive: {}",
-                                       world.generation(),
-                                       world.alive()));
+                          format_args!("Gen: {} / Alive: {}", world.generation(), world.alive()));
     }
 
     fn print_status(&mut self, clear: bool, args: fmt::Arguments) {
