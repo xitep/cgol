@@ -1,7 +1,6 @@
 use std::fmt::{self, Write};
 
 use rand::Rng;
-use bit_vec::BitVec;
 
 pub struct World {
     width: usize,
@@ -9,38 +8,39 @@ pub struct World {
 
     generation: usize, // current generation of cells
     alive: usize, // current number of live cells
-    cells: BitVec, // cells addressable by: `x + y*width`
+    cells: Vec<bool>,   // cells addressable by: `x + y*width`
 }
 
 impl fmt::Debug for World {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         write!(fmt,
-               "{}x{} (alive: {}, capacity: {})",
+               "{}x{} (alive: {})",
                self.width,
                self.height,
-               self.cells.iter().filter(|&x| x).count(),
-               self.cells.capacity())
+               self.cells.iter().filter(|&x| *x).count())
     }
 }
 
 impl World {
     pub fn empty(width: usize, height: usize) -> World {
-        World::from_cells(width, height, BitVec::from_elem(width * height, false))
+        World::from_cells(width, height, vec![false; width * height])
     }
 
     pub fn random<R: Rng>(r: &mut R, width: usize, height: usize) -> World {
-        World::from_cells(width,
-                          height,
-                          BitVec::from_fn(width * height, |_| r.gen::<f64>() < 0.3))
+        let mut v = Vec::with_capacity(width * height);
+        for _ in 0..(width * height) {
+            v.push(r.gen::<f64>() < 0.3);
+        }
+        World::from_cells(width, height, v)
     }
 
-    fn from_cells(width: usize, height: usize, cells: BitVec) -> World {
+    fn from_cells(width: usize, height: usize, cells: Vec<bool>) -> World {
         assert_eq!(width * height, cells.len());
         World {
             width: width,
             height: height,
             generation: 0,
-            alive: cells.iter().filter(|&x| x).count(),
+            alive: cells.iter().filter(|&x| *x).count(),
             cells: cells,
         }
     }
@@ -65,19 +65,19 @@ impl World {
         if new_width == self.width && new_height == self.height {
             return;
         }
-        let mut ncells = BitVec::from_elem(new_width * new_height, false);
+        let mut ncells = vec![false; new_width * new_height];
         for h in 0..self.height {
             for w in 0..self.width {
                 if self.is_alive(w, h) {
                     let (nw, nh) = (w % new_width, h % new_height);
-                    ncells.set(nh * new_width + nw, true);
+                    *ncells.get_mut(nh * new_width + nw).unwrap() = true;
                 }
             }
         }
         self.width = new_width;
         self.height = new_height;
         self.cells = ncells;
-        self.alive = self.cells.iter().filter(|&x| x).count();
+        self.alive = self.cells.iter().filter(|&x| *x).count();
     }
 
     //
@@ -116,7 +116,7 @@ impl World {
         debug_assert!(w < self.width);
         debug_assert!(h < self.height);
 
-        self.cells.set(h * self.width + w, alive);
+        *self.cells.get_mut(h * self.width + w).unwrap() = alive;
         if alive {
             self.alive += 1;
         } else {
