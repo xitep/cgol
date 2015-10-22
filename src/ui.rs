@@ -68,7 +68,7 @@ impl UI {
     }
 
     fn print_world(&mut self, world: &World) {
-        for h in 0..world.height() {
+        for h in 0..(world.height() - 1) {
             self.line_buf.clear();
             world.render_line(h, &mut self.line_buf);
             self.print_line(0, h, &self.line_buf);
@@ -77,12 +77,29 @@ impl UI {
     }
 
     fn update_status(&mut self, world: &World) {
-        self.print_status(format_args!("Gen: {} / Alive: {}", world.generation(), world.alive()));
+        let line_is_clean = if world.height() >= self.height() {
+            self.line_buf.clear();
+            world.render_line(self.height() - 1, &mut self.line_buf);
+            self.print_line(0, self.height() - 1, &self.line_buf);
+            true
+        } else {
+            false
+        };
+        self.print_status(line_is_clean,
+                          format_args!("Gen: {} / Alive: {}",
+                                       world.generation(),
+                                       world.alive()));
     }
 
-    fn print_status(&mut self, args: fmt::Arguments) {
+    fn print_status(&mut self, clear: bool, args: fmt::Arguments) {
         self.line_buf.clear();
         let _ = self.line_buf.write_fmt(args);
+
+        if !clear {
+            for _ in 0..(self.line_buf.len() - self.width()) {
+                self.line_buf.push(' ');
+            }
+        }
         self.print_line(0, self.height - 1, &self.line_buf);
     }
 
