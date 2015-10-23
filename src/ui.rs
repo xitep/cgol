@@ -3,7 +3,8 @@ use std::fmt::{self, Write};
 use rustbox::{self, RustBox, InitOptions, Event, Color};
 use rustbox::keyboard::Key;
 use time::Duration;
-use world::{self, World};
+use rand::thread_rng;
+use world::World;
 
 enum Error {
     RustboxInit(rustbox::InitError),
@@ -165,7 +166,7 @@ fn run_(world: Option<World>, alive: char, dead: char) -> Result<(), Error> {
     // ~ if no world was explicitely specified, generated one
     let mut world = match world {
         Some(w) => w,
-        None => world::random(ui.width(), ui.height()),
+        None => World::random(&mut thread_rng(), ui.width(), ui.height()),
     };
     // ~ expand the give world to the size of the ui and draw the world
     {
@@ -200,7 +201,7 @@ fn run_(world: Option<World>, alive: char, dead: char) -> Result<(), Error> {
                         // ~ regenerate (random) world
                         animate = false;
                         nextdelay = Duration::nanoseconds(0);
-                        world = world::random(ui.width(), ui.height());
+                        world = World::random(&mut thread_rng(), ui.width(), ui.height());
                         ui.redraw_scene(&world, true);
                     }
                     Key::Char('s') => {
